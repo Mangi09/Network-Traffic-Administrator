@@ -4,6 +4,7 @@ import psutil
 import requests
 import time
 import ctypes
+import sys
 from datetime import datetime
 
 SERVER_URL = "http://127.0.0.1:5000/api/traffic"
@@ -11,6 +12,23 @@ SERVER_URL = "http://127.0.0.1:5000/api/traffic"
 seen_connections = set()
 last_popup_time = 0
 POPUP_COOLDOWN = 30  # seconds
+
+# ==========================================================
+# MODE CONFIGURATION
+# ==========================================================
+# ---- SINGLE PC MODE (Default) ----
+# Uses actual hostname and IP of this machine
+
+SINGLE_PC_MODE = False
+
+# ---- MULTI PC MODE (Simulation) ----
+# Set SINGLE_PC_MODE = False
+# Then run:
+# python agent.py 1
+# python agent.py 2
+# python agent.py 3
+# Each number simulates a different PC
+
 
 # Restricted domain keywords
 RESTRICTED_DOMAINS = {
@@ -60,9 +78,39 @@ def get_protocol_from_port(port):
         return "OTHER"
 
 
+# ==========================================================
+# HOSTNAME + IP LOGIC
+# ==========================================================
+def get_system_identity():
+
+    if SINGLE_PC_MODE:
+        # ------------------------------
+        # SINGLE PC MODE
+        # ------------------------------
+        hostname = socket.gethostname()
+        ip_address = get_ip()
+
+    else:
+        # ------------------------------
+        # MULTI PC SIMULATION MODE
+        # ------------------------------
+        if len(sys.argv) > 1:
+            pc_id = sys.argv[1]
+        else:
+            pc_id = "1"
+
+        hostname = f"PC-{pc_id}"
+        ip_address = f"192.168.1.{100 + int(pc_id)}"
+
+    return hostname, ip_address
+
+
+# ==========================================================
+# MAIN LOOP
+# ==========================================================
 while True:
-    hostname = socket.gethostname()
-    ip_address = get_ip()
+
+    hostname, ip_address = get_system_identity()
     mac_address = get_mac()
 
     connections = psutil.net_connections(kind='inet')
@@ -78,7 +126,6 @@ while True:
 
             seen_connections.add(connection_id)
 
-            # Reverse DNS
             try:
                 domain_name = socket.gethostbyaddr(remote_ip)[0]
             except:
@@ -86,14 +133,12 @@ while True:
 
             protocol = get_protocol_from_port(remote_port)
 
-            # 🔎 Check restricted domain
             restricted = check_restricted_domain(domain_name)
 
             if restricted:
                 keyword, severity = restricted
                 current_time = time.time()
 
-                # Prevent popup spam
                 if current_time - last_popup_time > POPUP_COOLDOWN:
                     ctypes.windll.user32.MessageBoxW(
                         0,
@@ -115,7 +160,7 @@ while True:
 
             try:
                 requests.post(SERVER_URL, json=data)
-                print(f"Sent data for {domain_name}")
+                print(f"[{hostname}] Sent data for {domain_name}")
             except Exception as e:
                 print("Error sending data:", e)
 

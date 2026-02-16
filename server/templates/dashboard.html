@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QuadNexus Security Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+        }
+        .card-glass {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .severity-high { background: #b02a37; padding: 5px 10px; border-radius: 8px; }
+        .severity-medium { background: #d39e00; padding: 5px 10px; border-radius: 8px; }
+        .severity-low { background: #198754; padding: 5px 10px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>QuadNexus Security Monitoring</h2>
+        <a href="/logout" class="btn btn-danger">Logout</a>
+    </div>
+
+    <!-- SUMMARY CARDS -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card-glass text-center">
+                <h5>High Alerts</h5>
+                <h2 id="high">0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-glass text-center">
+                <h5>Medium Alerts</h5>
+                <h2 id="medium">0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-glass text-center">
+                <h5>Low Alerts</h5>
+                <h2 id="low">0</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card-glass text-center">
+                <h5>Total Data Usage</h5>
+                <h2 id="usage">0</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLES -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card-glass">
+                <h4>Recent Alerts</h4>
+                <table class="table table-dark table-striped">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>IP</th>
+                            <th>Reason</th>
+                            <th>Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="alertsTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card-glass">
+                <h4>Recent Network Activity</h4>
+                <table class="table table-dark table-striped">
+                    <thead>
+                        <tr>
+                            <th>Client</th>
+                            <th>Domain</th>
+                            <th>Protocol</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logsTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+async function loadData() {
+    const response = await fetch("/api/summary");
+    const data = await response.json();
+
+    document.getElementById("high").innerText = data.high;
+    document.getElementById("medium").innerText = data.medium;
+    document.getElementById("low").innerText = data.low;
+    document.getElementById("usage").innerText = data.total_usage + " bytes";
+
+    const alertsTable = document.getElementById("alertsTable");
+    alertsTable.innerHTML = "";
+
+    data.recent_alerts.forEach(a => {
+        alertsTable.innerHTML += `
+            <tr>
+                <td>${a.client}</td>
+                <td>${a.ip}</td>
+                <td>${a.reason}</td>
+                <td><span class="severity-${a.severity.toLowerCase()}">${a.severity}</span></td>
+            </tr>
+        `;
+    });
+
+    const logsTable = document.getElementById("logsTable");
+    logsTable.innerHTML = "";
+
+    data.recent_logs.forEach(l => {
+        logsTable.innerHTML += `
+            <tr>
+                <td>${l.client}</td>
+                <td>${l.domain}</td>
+                <td>${l.protocol}</td>
+                <td>${l.bytes}</td>
+            </tr>
+        `;
+    });
+}
+
+setInterval(loadData, 5000);
+loadData();
+</script>
