@@ -17,6 +17,7 @@ class Client(db.Model):
     username = db.Column(db.String(100))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Relationships
     traffic_logs = db.relationship("TrafficLog", backref="client", lazy=True)
     alerts = db.relationship("Alert", backref="client", lazy=True)
 
@@ -28,7 +29,11 @@ class TrafficLog(db.Model):
     __tablename__ = "traffic_logs"
 
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey("clients.id"), nullable=False)
+    client_id = db.Column(
+        db.Integer,
+        db.ForeignKey("clients.id"),   # ✅ correct
+        nullable=False
+    )
 
     destination_domain = db.Column(db.String(200))
     protocol = db.Column(db.String(20))
@@ -44,9 +49,17 @@ class Alert(db.Model):
     __tablename__ = "alerts"
 
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey("clients.id"), nullable=False)
+
+    client_id = db.Column(
+        db.Integer,
+        db.ForeignKey("clients.id"),   # ✅ FIXED HERE
+        nullable=False
+    )
 
     reason = db.Column(db.String(255))
-    severity = db.Column(db.String(20))  # Low / Medium / High
+    severity = db.Column(db.String(50))
 
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(
+        db.DateTime,
+        default=datetime.utcnow
+    )
