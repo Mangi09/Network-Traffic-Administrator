@@ -3,9 +3,7 @@ from models import db, TrafficLog, Client, Alert
 from datetime import datetime, timedelta
 from functools import wraps
 
-# =====================================================
 # App Config
-# =====================================================
 app = Flask(__name__)
 app.secret_key = "quadnexus_secret_key"
 
@@ -17,9 +15,7 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# =====================================================
 # Restricted Domain Keywords
-# =====================================================
 RESTRICTED_DOMAINS = {
     "youtube": "High",
     "googlevideo": "High",
@@ -41,9 +37,7 @@ def check_restricted_domain(domain):
             return keyword, severity
     return None
 
-# =====================================================
 # LOGIN SYSTEM
-# =====================================================
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -75,9 +69,7 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-# =====================================================
 # DASHBOARD
-# =====================================================
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -125,9 +117,7 @@ def summary():
         ]
     })
 
-# =====================================================
 # RECEIVE TRAFFIC
-# =====================================================
 @app.route('/api/traffic', methods=['POST'])
 def receive_traffic():
     data = request.json
@@ -161,9 +151,7 @@ def receive_traffic():
 
     db.session.add(log)
 
-    # =====================================================
     # Restricted Domain Alert
-    # =====================================================
     restricted = check_restricted_domain(destination_domain)
 
     if restricted:
@@ -184,9 +172,7 @@ def receive_traffic():
             )
             db.session.add(alert)
 
-    # =====================================================
     # Bandwidth Alert
-    # =====================================================
     if bytes_transferred and bytes_transferred > 10000000:
         alert = Alert(
             client_id=client.id,
@@ -199,9 +185,7 @@ def receive_traffic():
 
     return {"message": "Traffic data saved successfully"}
 
-# =====================================================
 # VIEW LOGS
-# =====================================================
 @app.route('/view/logs')
 @login_required
 def view_logs():
@@ -220,9 +204,7 @@ def view_logs():
         ]
     })
 
-# =====================================================
 # VIEW ALERTS
-# =====================================================
 @app.route('/view/alerts')
 @login_required
 def view_alerts():
@@ -240,8 +222,6 @@ def view_alerts():
         ]
     })
 
-# =====================================================
 # RUN SERVER
-# =====================================================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

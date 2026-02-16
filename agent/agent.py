@@ -77,23 +77,14 @@ def get_protocol_from_port(port):
     else:
         return "OTHER"
 
-
-# ==========================================================
 # HOSTNAME + IP LOGIC
-# ==========================================================
 def get_system_identity():
 
     if SINGLE_PC_MODE:
-        # ------------------------------
-        # SINGLE PC MODE
-        # ------------------------------
         hostname = socket.gethostname()
         ip_address = get_ip()
 
     else:
-        # ------------------------------
-        # MULTI PC SIMULATION MODE
-        # ------------------------------
         if len(sys.argv) > 1:
             pc_id = sys.argv[1]
         else:
@@ -104,10 +95,6 @@ def get_system_identity():
 
     return hostname, ip_address
 
-
-# ==========================================================
-# MAIN LOOP
-# ==========================================================
 while True:
 
     hostname, ip_address = get_system_identity()

@@ -3,10 +3,7 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-
-# ==========================
 # Clients Table
-# ==========================
 class Client(db.Model):
     __tablename__ = "clients"
 
@@ -21,17 +18,14 @@ class Client(db.Model):
     traffic_logs = db.relationship("TrafficLog", backref="client", lazy=True)
     alerts = db.relationship("Alert", backref="client", lazy=True)
 
-
-# ==========================
 # Traffic Logs Table
-# ==========================
 class TrafficLog(db.Model):
     __tablename__ = "traffic_logs"
 
     id = db.Column(db.Integer, primary_key=True)
     client_id = db.Column(
         db.Integer,
-        db.ForeignKey("clients.id"),   # ✅ correct
+        db.ForeignKey("clients.id"),   
         nullable=False
     )
 
@@ -42,9 +36,7 @@ class TrafficLog(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-# ==========================
 # Alerts Table
-# ==========================
 class Alert(db.Model):
     __tablename__ = "alerts"
 
@@ -52,7 +44,7 @@ class Alert(db.Model):
 
     client_id = db.Column(
         db.Integer,
-        db.ForeignKey("clients.id"),   # ✅ FIXED HERE
+        db.ForeignKey("clients.id"),   
         nullable=False
     )
 
