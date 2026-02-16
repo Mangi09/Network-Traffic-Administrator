@@ -1,54 +1,69 @@
-import psutil
 import socket
+import uuid
+import psutil
 import requests
 import time
-import json
 
-# SERVER API URL (change IP if needed)
 SERVER_URL = "http://127.0.0.1:5000/api/traffic"
 
-def get_system_info():
+
+def get_ip():
+    return socket.gethostbyname(socket.gethostname())
+
+
+def get_mac():
+    return ':'.join(['{:02x}'.format((uuid.getnode() >> elements) & 0xff)
+                     for elements in range(0, 8*6, 8)][::-1])
+
+
+def get_protocol_from_port(port):
+    if port == 80:
+        return "HTTP"
+    elif port == 443:
+        return "HTTPS"
+    elif port == 53:
+        return "DNS"
+    elif port == 21:
+        return "FTP"
+    else:
+        return "OTHER"
+
+
+while True:
     hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
-    return hostname, ip_address
+    ip_address = get_ip()
+    mac_address = get_mac()
 
-def get_network_usage():
-    net_io = psutil.net_io_counters()
-    bytes_sent = net_io.bytes_sent
-    bytes_received = net_io.bytes_recv
-    return bytes_sent, bytes_received
+    connections = psutil.net_connections(kind='inet')
 
-def send_data_to_server(data):
-    try:
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(
-            SERVER_URL,
-            data=json.dumps(data),
-            headers=headers,
-            timeout=5
-        )
-        print("Data sent:", response.status_code)
-    except Exception as e:
-        print("Error sending data:", e)
+    for conn in connections:
+        if conn.raddr:
+            remote_ip = conn.raddr.ip
+            try:
+                domain_name = socket.gethostbyaddr(remote_ip)[0]
+            except:
+                domain_name = remote_ip
 
-def main():
-    print("Client Agent Started...")
-    
-    hostname, ip_address = get_system_info()
+            remote_port = conn.raddr.port
 
-    while True:
-        bytes_sent, bytes_received = get_network_usage()
+            protocol = get_protocol_from_port(remote_port)
 
-        data = {
-            "hostname": hostname,
-            "ip_address": ip_address,
-            "bytes_sent": bytes_sent,
-            "bytes_received": bytes_received
-        }
+            bytes_sent = psutil.net_io_counters().bytes_sent
+            bytes_recv = psutil.net_io_counters().bytes_recv
 
-        send_data_to_server(data)
+            data = {
+                "hostname": hostname,
+                "ip_address": ip_address,
+                "mac_address": mac_address,
+                "username": "local_user",
+                "destination_domain": domain_name,
+                "protocol": protocol,
+                "bytes_transferred": bytes_sent + bytes_recv
+            }
 
-        time.sleep(10)  # send data every 10 seconds
+            try:
+                requests.post(SERVER_URL, json=data)
+            except:
+                pass
 
-if __name__ == "__main__":
-    main()
+    time.sleep(10)
