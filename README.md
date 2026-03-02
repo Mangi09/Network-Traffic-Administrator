@@ -32,6 +32,14 @@ The system enables administrators to proactively monitor internal traffic and re
 ## System Architecture
 <img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/3986a5ee-bb1e-41aa-ab1d-6c7adcf39cd1" />
 
+## Demo Videos
+- Single PC
+https://github.com/user-attachments/assets/b2880dbc-aaf0-484a-8060-8e245d606010
+
+- Multi PC
+https://github.com/user-attachments/assets/000faef1-93c2-4633-97f5-7c8ec0ef040a
+
+
 
 
 
