@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>QuadNexus Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --card-bg: white;
+            --card-border: #e0e0e0;
+            --breadcrumb-text: #6c757d;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+            --card-border: #333;
+            --breadcrumb-text: #aaa;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card-custom {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            height: 100%;
+            transition: background 0.3s, border 0.3s;
+        }
+
+        .table {
+            color: var(--text-color) !important;
+            --bs-table-bg: transparent !important;
+            --bs-table-color: var(--text-color) !important;
+            --bs-table-border-color: var(--card-border) !important;
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            font-size: 0.9rem;
+            color: var(--text-color);
+            border-bottom-color: var(--card-border);
+            background-color: transparent !important;
+        }
+
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 250px;
+            width: 100%;
+        }
+
+        .text-muted { color: var(--breadcrumb-text) !important; font-weight: 500; }
+        .text-dark { color: var(--text-color) !important; }
+        .small { color: var(--text-color) !important; opacity: 0.95 !important; font-weight: 500; }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid px-4 pt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Network
+                    Analytics</h3>
+                <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="/dashboard"
+                                class="text-decoration-none text-muted small">Dashboard</a></li>
+                        <li class="breadcrumb-item active small text-muted" aria-current="page">Visual Insights</li>
+                    </ol>
+                </nav>
+            </div>
+            <div>
+                <button id="themeToggle" class="btn btn-outline-secondary btn-sm shadow-sm me-2">
+                    <i class="bi bi-moon-stars me-1"></i>Theme
+                </button>
+                <a href="/dashboard" class="btn btn-outline-primary btn-sm shadow-sm me-2"><i
+                        class="bi bi-speedometer2 me-1"></i>Back to Dashboard</a>
+                <a href="/logout" class="btn btn-outline-danger btn-sm shadow-sm"><i
+                        class="bi bi-box-arrow-right me-1"></i>Logout</a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Traffic Timeline -->
+            <div class="col-md-12 mb-4">
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-activity text-primary me-2"></i>Network Traffic Timeline
+                    </h5>
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="trafficTimelineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Protocol Distribution -->
+            <div class="col-md-4 mb-4">
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-diagram-3 text-info me-2"></i>Protocols</h5>
+                    <div class="chart-container">
+                        <canvas id="protocolChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Clients -->
+            <div class="col-md-4 mb-4">
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-pc-display text-success me-2"></i>Top Clients (Bytes)</h5>
+                    <div class="chart-container">
+                        <canvas id="clientChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Severity Distribution -->
+            <div class="col-md-4 mb-4">
+                <div class="card-custom">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-exclamation-octagon text-danger me-2"></i>Alert Severity
+                    </h5>
+                    <div class="chart-container">
+                        <canvas id="severityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        function updateChartsTheme(isDark) {
+            const gridColor = isDark ? '#444' : '#e0e0e0';
+            const textColor = isDark ? '#ccc' : '#666';
+
+            Chart.defaults.color = textColor;
+            Chart.defaults.scale.grid.color = gridColor;
+
+            // Re-render or refresh charts if needed, 
+            // but for now, we'll just set the defaults before creation
+        }
+
+        // Check for saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="bi bi-sun me-1"></i>Light Mode';
+            updateChartsTheme(true);
+        } else {
+            updateChartsTheme(false);
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            themeToggle.innerHTML = isDark ?
+                '<i class="bi bi-sun me-1"></i>Light Mode' :
+                '<i class="bi bi-moon-stars me-1"></i>Dark Mode';
+
+            // Reload page to refresh chart colors
+            location.reload();
+        });
+
+        async function loadGraphData() {
+            const response = await fetch("/api/graph-data");
+            const data = await response.json();
+
+            // 1. Protocol Chart
+            new Chart(document.getElementById('protocolChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(data.protocols),
+                    datasets: [{
+                        data: Object.values(data.protocols),
+                        backgroundColor: ['#1976d2', '#7b1fa2', '#2e7d32', '#fbc02d', '#d32f2f', '#616161']
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            // 2. Top Clients Chart
+            new Chart(document.getElementById('clientChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(data.top_clients),
+                    datasets: [{
+                        label: 'Bytes Transferred',
+                        data: Object.values(data.top_clients),
+                        backgroundColor: '#007c91'
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+
+            // 3. Severity Chart
+            new Chart(document.getElementById('severityChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(data.severities),
+                    datasets: [{
+                        data: Object.values(data.severities),
+                        backgroundColor: ['#d32f2f', '#f57c00', '#388e3c']
+                    }]
+                },
+                options: { maintainAspectRatio: false }
+            });
+
+            // 4. Traffic Timeline Chart
+            new Chart(document.getElementById('trafficTimelineChart'), {
+                type: 'line',
+                data: {
+                    labels: data.traffic_timeline.map(t => t.time),
+                    datasets: [{
+                        label: 'Bytes Transferred',
+                        data: data.traffic_timeline.map(t => t.bytes),
+                        borderColor: '#007c91',
+                        backgroundColor: 'rgba(0, 124, 145, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        loadGraphData();
+    </script>
+</body>
+
+</html>

@@ -75,18 +75,25 @@ def logout():
 def dashboard():
     return render_template("dashboard.html")
 
+# GRAPHS PAGE
+@app.route("/graphs")
+@login_required
+def graphs_page():
+    return render_template("graphs.html")
+
 
 @app.route("/api/summary")
 @login_required
 def summary():
-
     high = Alert.query.filter_by(severity="High").count()
     medium = Alert.query.filter_by(severity="Medium").count()
     low = Alert.query.filter_by(severity="Low").count()
 
-    total_usage = db.session.query(
+    # Calculate Daily Usage (last 24 hours)
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    daily_usage = db.session.query(
         db.func.sum(TrafficLog.bytes_transferred)
-    ).scalar() or 0
+    ).filter(TrafficLog.timestamp >= yesterday).scalar() or 0
 
     recent_alerts = Alert.query.order_by(Alert.timestamp.desc()).limit(5).all()
     recent_logs = TrafficLog.query.order_by(TrafficLog.timestamp.desc()).limit(5).all()
@@ -95,7 +102,7 @@ def summary():
         "high": high,
         "medium": medium,
         "low": low,
-        "total_usage": total_usage,
+        "total_usage": daily_usage,  # Now returning daily usage
         "recent_alerts": [
             {
                 "client": a.client.hostname,
@@ -115,6 +122,36 @@ def summary():
                 "time": str(l.timestamp)
             } for l in recent_logs
         ]
+    })
+
+@app.route("/api/graph-data")
+@login_required
+def graph_data():
+    # 1. Protocol Distribution
+    protocols = db.session.query(TrafficLog.protocol, db.func.count(TrafficLog.id))\
+        .group_by(TrafficLog.protocol).all()
+    
+    # 2. Top 5 Clients by Usage
+    top_clients = db.session.query(Client.hostname, db.func.sum(TrafficLog.bytes_transferred))\
+        .join(TrafficLog)\
+        .group_by(Client.hostname)\
+        .order_by(db.func.sum(TrafficLog.bytes_transferred).desc())\
+        .limit(5).all()
+
+    # 3. Alerts by Severity
+    severity_counts = db.session.query(Alert.severity, db.func.count(Alert.id))\
+        .group_by(Alert.severity).all()
+
+    # 4. Recent Traffic Over Time
+    recent_traffic = db.session.query(TrafficLog.timestamp, TrafficLog.bytes_transferred)\
+        .order_by(TrafficLog.timestamp.desc())\
+        .limit(20).all()
+    
+    return jsonify({
+        "protocols": {p[0]: p[1] for p in protocols},
+        "top_clients": {c[0]: c[1] for c in top_clients},
+        "severities": {s[0]: s[1] for s in severity_counts},
+        "traffic_timeline": [{"time": t[0].strftime("%H:%M:%S"), "bytes": t[1]} for t in reversed(recent_traffic)]
     })
 
 # RECEIVE TRAFFIC

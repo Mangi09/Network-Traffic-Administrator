@@ -6,32 +6,67 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --card-bg: white;
+            --card-border: #e0e0e0;
+            --table-header-bg: #f8f9fa;
+            --table-header-text: #555;
+            --breadcrumb-text: #6c757d;
+            --pc-display-icon: #6c757d;
+            --muted-text: #6c757d;
+        }
+
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --card-bg: #1e1e1e;
+            --card-border: #333;
+            --table-header-bg: #252525;
+            --table-header-text: #bbb;
+            --breadcrumb-text: #aaa;
+            --pc-display-icon: #4dd0e1;
+            --muted-text: #bbb;
+        }
+
         body {
-            background: #f4f7f6;
-            color: #333;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background 0.3s, color 0.3s;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         .card-custom {
-            background: white;
+            background: var(--card-bg);
             border-radius: 8px;
             padding: 20px;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
+            transition: background 0.3s, border 0.3s;
+            min-height: 160px;
+            /* Force consistent card height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .card-title {
-            color: #444;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
-            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.9;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .card-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            color: #333;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: var(--text-color);
+            margin-bottom: 5px;
         }
 
         .severity-high {
@@ -44,6 +79,12 @@
             border: 1px solid #d9534f;
         }
 
+        body.dark-mode .severity-high {
+            background: rgba(217, 83, 79, 0.25);
+            color: #ff8a80;
+            border-color: #ff8a80;
+        }
+
         .severity-medium {
             background: #fff3e6;
             color: #f0ad4e;
@@ -54,6 +95,12 @@
             border: 1px solid #f0ad4e;
         }
 
+        body.dark-mode .severity-medium {
+            background: rgba(240, 173, 78, 0.25);
+            color: #ffd180;
+            border-color: #ffd180;
+        }
+
         .severity-low {
             background: #e6f7e6;
             color: #5cb85c;
@@ -62,6 +109,12 @@
             font-size: 0.8rem;
             font-weight: 600;
             border: 1px solid #5cb85c;
+        }
+
+        body.dark-mode .severity-low {
+            background: rgba(92, 184, 92, 0.25);
+            color: #b9f6ca;
+            border-color: #b9f6ca;
         }
 
         .protocol-badge {
@@ -92,32 +145,120 @@
             color: #616161;
         }
 
+        body.dark-mode .protocol-https {
+            background: rgba(25, 118, 210, 0.4);
+            color: #bbdefb;
+        }
+
+        body.dark-mode .protocol-http {
+            background: rgba(123, 31, 162, 0.4);
+            color: #e1bee7;
+        }
+
+        body.dark-mode .protocol-dns {
+            background: rgba(46, 125, 50, 0.4);
+            color: #c8e6c9;
+        }
+
+        body.dark-mode .protocol-other {
+            background: rgba(158, 158, 158, 0.3);
+            color: #f5f5f5;
+        }
+
         .client-name {
-            font-weight: 600;
+            font-weight: 700;
             color: #007c91;
         }
 
+        body.dark-mode .client-name {
+            color: #4dd0e1;
+        }
+
         .table thead th {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
-            color: #555;
-            font-size: 0.85rem;
+            background-color: var(--table-header-bg);
+            border-bottom: 2px solid var(--card-border);
+            color: var(--table-header-text);
+            font-size: 0.8rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .table {
+            color: var(--text-color) !important;
+            --bs-table-bg: transparent !important;
+            --bs-table-color: var(--text-color) !important;
+            --bs-table-border-color: var(--card-border) !important;
+            --bs-table-hover-bg: rgba(255, 255, 255, 0.05) !important;
         }
 
         .table tbody td {
             vertical-align: middle;
             font-size: 0.9rem;
+            color: var(--text-color);
+            border-bottom-color: var(--card-border);
+            background-color: transparent !important;
         }
 
         .data-usage-high {
-            color: #d9534f;
-            font-weight: 600;
+            color: #ff5252;
+            font-weight: 700;
         }
 
         .data-usage-normal {
-            color: #555;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .text-muted {
+            color: var(--muted-text) !important;
+            font-weight: 500;
+        }
+
+        .bi-pc-display {
+            color: var(--pc-display-icon);
+        }
+
+        .text-dark {
+            color: var(--text-color) !important;
+        }
+
+        .card-subtext {
+            font-size: 0.8rem;
+            color: var(--muted-text);
+            font-weight: 600;
+        }
+
+        .small,
+        .reason-text {
+            color: var(--text-color) !important;
+            opacity: 0.95 !important;
+            font-weight: 500;
+        }
+
+        .row {
+            margin-bottom: 20px;
+        }
+
+        .filter-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .filter-select:focus {
+            border-color: #007c91;
         }
     </style>
 </head>
@@ -133,41 +274,48 @@
                     <ol class="breadcrumb mb-0">
                         <li class="breadcrumb-item"><a href="#"
                                 class="text-decoration-none text-muted small">Dashboard</a></li>
-                        <li class="breadcrumb-item active small" aria-current="page">Real-time Analysis</li>
+                        <li class="breadcrumb-item active small text-muted" aria-current="page">Real-time Analysis</li>
                     </ol>
                 </nav>
             </div>
-            <a href="/logout" class="btn btn-outline-danger btn-sm shadow-sm"><i
-                    class="bi bi-box-arrow-right me-1"></i>Logout</a>
+            <div>
+                <button id="themeToggle" class="btn btn-outline-secondary btn-sm shadow-sm me-2">
+                    <i class="bi bi-moon-stars me-1"></i>Theme
+                </button>
+                <a href="/graphs" class="btn btn-outline-primary btn-sm shadow-sm me-2"><i
+                        class="bi bi-graph-up-arrow me-1"></i>Analytics</a>
+                <a href="/logout" class="btn btn-outline-danger btn-sm shadow-sm"><i
+                        class="bi bi-box-arrow-right me-1"></i>Logout</a>
+            </div>
         </div>
 
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="card-custom text-center border-0" style="border-left: 5px solid #d9534f !important;">
-                    <div class="card-title text-danger small text-uppercase mb-1">Critical Alerts</div>
+                    <div class="card-title text-danger">Critical Alerts</div>
                     <div class="card-value" id="high">0</div>
-                    <div class="text-muted small">Requires immediate action</div>
+                    <div class="card-subtext">Requires immediate action</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card-custom text-center border-0" style="border-left: 5px solid #f0ad4e !important;">
-                    <div class="card-title text-warning small text-uppercase mb-1">Medium Alerts</div>
+                    <div class="card-title text-warning">Medium Alerts</div>
                     <div class="card-value" id="medium">0</div>
-                    <div class="text-muted small">Monitor closely</div>
+                    <div class="card-subtext">Monitor closely</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card-custom text-center border-0" style="border-left: 5px solid #5cb85c !important;">
-                    <div class="card-title text-success small text-uppercase mb-1">Low Alerts</div>
+                    <div class="card-title text-success">Low Alerts</div>
                     <div class="card-value" id="low">0</div>
-                    <div class="text-muted small">Normal operations</div>
+                    <div class="card-subtext">Normal operations</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card-custom text-center border-0" style="border-left: 5px solid #007c91 !important;">
-                    <div class="card-title text-info small text-uppercase mb-1">Network Traffic</div>
-                    <div class="card-value fs-4" id="usage">0</div>
-                    <div class="text-muted small">Total bandwidth usage</div>
+                    <div class="card-title text-info">Daily Traffic</div>
+                    <div class="card-value" id="usage">0</div>
+                    <div class="card-subtext">Total usage in last 24h</div>
                 </div>
             </div>
         </div>
@@ -175,14 +323,23 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="card-custom">
-                    <h5 class="mb-3 fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Recent
-                        Alerts</h5>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Recent
+                            Alerts</h5>
+                        <div class="filter-container mb-0">
+                            <select id="severityFilter" class="filter-select">
+                                <option value="all">All Severities</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
-                                    <th>Client</th>
-                                    <th>IP Address</th>
+                                    <th>Source Client</th>
                                     <th>Reason</th>
                                     <th class="text-center">Level</th>
                                 </tr>
@@ -196,11 +353,24 @@
             <div class="col-md-6">
                 <div class="card-custom">
                     <h5 class="mb-3 fw-bold"><i class="bi bi-activity text-primary me-2"></i>Network Activity</h5>
+                    <div class="filter-container">
+                        <select id="pcFilter" class="filter-select">
+                            <option value="all">All PCs</option>
+                        </select>
+                        <select id="protocolFilter" class="filter-select">
+                            <option value="all">All Protocols</option>
+                            <option value="HTTPS">HTTPS</option>
+                            <option value="HTTP">HTTP</option>
+                            <option value="DNS">DNS</option>
+                            <option value="OTHER">OTHER</option>
+                        </select>
+                        <input type="date" id="dateFilter" class="filter-select">
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
                             <thead>
                                 <tr>
-                                    <th>Source</th>
+                                    <th>Source Client</th>
                                     <th>Destination</th>
                                     <th class="text-center">Type</th>
                                     <th class="text-end">Payload</th>
@@ -216,6 +386,26 @@
     </div>
 
     <script>
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        // Check for saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-mode');
+            themeToggle.innerHTML = '<i class="bi bi-sun me-1"></i>Light Mode';
+        }
+
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const isDark = body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            themeToggle.innerHTML = isDark ?
+                '<i class="bi bi-sun me-1"></i>Light Mode' :
+                '<i class="bi bi-moon-stars me-1"></i>Dark Mode';
+        });
+
         function formatBytes(bytes) {
             if (bytes === 0) return '0 B';
             const k = 1024;
@@ -233,37 +423,82 @@
             document.getElementById("low").innerText = data.low;
             document.getElementById("usage").innerText = formatBytes(data.total_usage);
 
+            // Update PC Filter options if they don't exist
+            const pcFilter = document.getElementById("pcFilter");
+            const existingPCs = Array.from(pcFilter.options).map(opt => opt.value);
+            const allPCs = [...new Set(data.recent_logs.map(l => l.client))];
+            allPCs.forEach(pc => {
+                if (!existingPCs.includes(pc)) {
+                    const option = document.createElement("option");
+                    option.value = pc;
+                    option.text = pc;
+                    pcFilter.add(option);
+                }
+            });
+
             const alertsTable = document.getElementById("alertsTable");
             alertsTable.innerHTML = "";
 
-            data.recent_alerts.forEach(a => {
-                alertsTable.innerHTML += `
+            const selectedSeverity = document.getElementById("severityFilter").value;
+
+            data.recent_alerts
+                .filter(a => selectedSeverity === "all" || a.severity === selectedSeverity)
+                .forEach(a => {
+                    alertsTable.innerHTML += `
             <tr>
-                <td><span class="client-name">${a.client}</span></td>
-                <td class="text-muted small">${a.ip}</td>
-                <td class="small">${a.reason}</td>
+                <td>
+                    <div class="client-name">${a.client}</div>
+                    <div class="text-muted small"><i class="bi bi-pc-display me-1"></i>${a.ip}</div>
+                </td>
+                <td class="reason-text small">${a.reason}</td>
                 <td class="text-center"><span class="severity-${a.severity.toLowerCase()}">${a.severity}</span></td>
             </tr>
         `;
-            });
+                });
 
             const logsTable = document.getElementById("logsTable");
             logsTable.innerHTML = "";
 
-            data.recent_logs.forEach(l => {
-                const protocolClass = `protocol-${(l.protocol || 'other').toLowerCase()}`;
-                const dataUsageClass = l.bytes > 1000000 ? 'data-usage-high' : 'data-usage-normal';
+            const selectedPC = document.getElementById("pcFilter").value;
+            const selectedProtocol = document.getElementById("protocolFilter").value;
+            const selectedDate = document.getElementById("dateFilter").value;
 
-                logsTable.innerHTML += `
+            data.recent_logs
+                .filter(l => {
+                    const matchesPC = selectedPC === "all" || l.client === selectedPC;
+                    const matchesProtocol = selectedProtocol === "all" || l.protocol === selectedProtocol;
+
+                    let matchesDate = true;
+                    if (selectedDate) {
+                        const logDate = new Date(l.time).toISOString().split('T')[0];
+                        matchesDate = logDate === selectedDate;
+                    }
+
+                    return matchesPC && matchesProtocol && matchesDate;
+                })
+                .forEach(l => {
+                    const protocolClass = `protocol-${(l.protocol || 'other').toLowerCase()}`;
+                    const dataUsageClass = l.bytes > 1000000 ? 'data-usage-high' : 'data-usage-normal';
+
+                    logsTable.innerHTML += `
             <tr>
-                <td><span class="client-name">${l.client}</span></td>
-                <td class="text-truncate small" style="max-width: 200px;" title="${l.domain}">${l.domain}</td>
+                <td>
+                    <div class="client-name">${l.client}</div>
+                    <div class="text-muted small"><i class="bi bi-pc-display me-1"></i>${l.ip}</div>
+                </td>
+                <td class="text-truncate reason-text small" style="max-width: 200px;" title="${l.domain}">${l.domain}</td>
                 <td class="text-center"><span class="protocol-badge ${protocolClass}">${l.protocol}</span></td>
                 <td class="text-end ${dataUsageClass}">${formatBytes(l.bytes)}</td>
             </tr>
         `;
-            });
+                });
         }
+
+        // Add event listeners for filters
+        document.getElementById("severityFilter").addEventListener("change", loadData);
+        document.getElementById("pcFilter").addEventListener("change", loadData);
+        document.getElementById("protocolFilter").addEventListener("change", loadData);
+        document.getElementById("dateFilter").addEventListener("change", loadData);
 
         setInterval(loadData, 5000);
         loadData();
