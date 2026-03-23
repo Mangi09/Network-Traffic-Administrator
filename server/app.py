@@ -222,6 +222,52 @@ def receive_traffic():
 
     return {"message": "Traffic data saved successfully"}
 
+@app.route('/api/system_alert', methods=['POST'])
+def system_alert():
+    data = request.json
+
+    ip_address = data.get("ip_address")
+    alert_type = data.get("type")   # "game" or "usb"
+    details = data.get("details")   # game name or usb info
+
+    client = Client.query.filter_by(ip_address=ip_address).first()
+
+    if not client:
+        return {"error": "Client not found"}, 404
+
+    reason = ""
+    
+    if alert_type == "game":
+        reason = f"Game detected: {details}"
+        severity = "High"
+
+    elif alert_type == "usb":
+        reason = f"USB device inserted: {details}"
+        severity = "High"
+
+    else:
+        return {"error": "Invalid alert type"}, 400
+
+    # Prevent spam (same alert within 2 mins)
+    two_minutes_ago = datetime.utcnow() - timedelta(minutes=2)
+
+    existing_alert = Alert.query.filter(
+        Alert.client_id == client.id,
+        Alert.reason.contains(details),
+        Alert.timestamp >= two_minutes_ago
+    ).first()
+
+    if not existing_alert:
+        alert = Alert(
+            client_id=client.id,
+            reason=reason,
+            severity=severity
+        )
+        db.session.add(alert)
+        db.session.commit()
+
+    return {"message": "System alert recorded"}
+
 # VIEW LOGS
 @app.route('/view/logs')
 @login_required
