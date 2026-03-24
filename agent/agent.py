@@ -9,8 +9,8 @@ import sys
 # ==========================
 # CONFIG
 # ==========================
-SERVER_URL = "http://10.0.8.43:5000/api/traffic"
-SYSTEM_ALERT_URL = "http://10.0.8.43:5000/api/system_alert"
+SERVER_URL = "http://127.0.0.1:5000/api/traffic"
+SYSTEM_ALERT_URL = "http://127.0.0.1:5000/api/system_alert"
 
 seen_connections = set()
 last_popup_time = 0

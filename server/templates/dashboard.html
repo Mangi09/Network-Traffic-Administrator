@@ -285,6 +285,22 @@
 </head>
 
 <body>
+    <div id="popupBox" style="
+        display:none;
+        position:fixed;
+        top:50%;
+        left:50%;
+        transform:translate(-50%, -50%);
+        background:#ff3b3b;
+        color:white;
+        padding:30px;
+        border-radius:12px;
+        z-index:9999;
+        text-align:center;
+        font-size:18px;
+        box-shadow:0 0 20px rgba(0,0,0,0.5);
+    ">
+    </div>
 
     <div class="container-fluid px-4 pt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -662,4 +678,31 @@
             }
         }
     </script>
+    <script>
+        let lastSeenTime = "";
+
+        function checkAlerts() {
+            fetch("/api/get_alerts")
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) return;
+
+                let latest = data[0];
+
+                // Only show if new alert
+                if (latest.time !== lastSeenTime) {
+
+                    if (latest.reason.includes("USB") || latest.reason.includes("Game")) {
+                        alert("⚠️ " + latest.reason);
+                    }
+
+                    lastSeenTime = latest.time;
+                }
+            })
+            .catch(() => {});
+        }
+
+        // keep checking in background
+        setInterval(checkAlerts, 3000);
+        </script>
 </body>

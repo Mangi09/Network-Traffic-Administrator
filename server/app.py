@@ -46,7 +46,6 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
 @app.route("/", methods=["GET", "POST"])
 def login():
     error = None
@@ -63,7 +62,6 @@ def login():
 
     return render_template("login.html", error=error)
 
-
 @app.route("/logout")
 def logout():
     session.clear()
@@ -75,24 +73,21 @@ def logout():
 def dashboard():
     return render_template("dashboard.html")
 
-# GRAPHS PAGE
 @app.route("/graphs")
 @login_required
 def graphs_page():
     return render_template("graphs.html")
 
-
+# ✅ SUMMARY API
 @app.route("/api/summary")
 @login_required
 def summary():
-    # Calculate Daily Alerts (last 24 hours)
     yesterday = datetime.utcnow() - timedelta(days=1)
-    
+
     high = Alert.query.filter(Alert.severity=="High", Alert.timestamp >= yesterday).count()
     medium = Alert.query.filter(Alert.severity=="Medium", Alert.timestamp >= yesterday).count()
     low = Alert.query.filter(Alert.severity=="Low", Alert.timestamp >= yesterday).count()
 
-    # Calculate Daily Usage (last 24 hours)
     daily_usage = db.session.query(
         db.func.sum(TrafficLog.bytes_transferred)
     ).filter(TrafficLog.timestamp >= yesterday).scalar() or 0
@@ -104,7 +99,7 @@ def summary():
         "high": high,
         "medium": medium,
         "low": low,
-        "total_usage": daily_usage,  # Now returning daily usage
+        "total_usage": daily_usage,
         "recent_alerts": [
             {
                 "client": a.client.hostname,
@@ -126,47 +121,42 @@ def summary():
         ]
     })
 
+# ✅ ALERT HISTORY
 @app.route("/api/alerts/history")
 @login_required
 def alert_history():
-    # Fetch all alerts, joining with Client to avoid N+1 queries
     alerts = Alert.query.join(Client).order_by(Alert.timestamp.desc()).all()
-    
-    history_data = []
-    for a in alerts:
-        history_data.append({
+
+    return jsonify([
+        {
             "client": a.client.hostname if a.client else "Unknown",
             "ip": a.client.ip_address if a.client else "N/A",
             "reason": a.reason,
             "severity": a.severity,
             "time": a.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-        })
-    
-    return jsonify(history_data)
+        } for a in alerts
+    ])
 
+# ✅ GRAPH DATA
 @app.route("/api/graph-data")
 @login_required
 def graph_data():
-    # 1. Protocol Distribution
     protocols = db.session.query(TrafficLog.protocol, db.func.count(TrafficLog.id))\
         .group_by(TrafficLog.protocol).all()
-    
-    # 2. Top 5 Clients by Usage
+
     top_clients = db.session.query(Client.hostname, db.func.sum(TrafficLog.bytes_transferred))\
         .join(TrafficLog)\
         .group_by(Client.hostname)\
         .order_by(db.func.sum(TrafficLog.bytes_transferred).desc())\
         .limit(5).all()
 
-    # 3. Alerts by Severity
     severity_counts = db.session.query(Alert.severity, db.func.count(Alert.id))\
         .group_by(Alert.severity).all()
 
-    # 4. Recent Traffic Over Time
     recent_traffic = db.session.query(TrafficLog.timestamp, TrafficLog.bytes_transferred)\
         .order_by(TrafficLog.timestamp.desc())\
         .limit(20).all()
-    
+
     return jsonify({
         "protocols": {p[0]: p[1] for p in protocols},
         "top_clients": {c[0]: c[1] for c in top_clients},
@@ -174,156 +164,89 @@ def graph_data():
         "traffic_timeline": [{"time": t[0].strftime("%H:%M:%S"), "bytes": t[1]} for t in reversed(recent_traffic)]
     })
 
-# RECEIVE TRAFFIC
+# ✅ MAIN ALERT API (FOR POPUP)
+@app.route("/api/get_alerts")
+def get_alerts():
+    alerts = Alert.query.order_by(Alert.timestamp.desc()).limit(20).all()
+
+    return jsonify([
+        {
+            "client": a.client.hostname,
+            "ip": a.client.ip_address,
+            "reason": a.reason,
+            "severity": a.severity,
+            "time": str(a.timestamp)
+        } for a in alerts
+    ])
+
+# ✅ RECEIVE TRAFFIC
 @app.route('/api/traffic', methods=['POST'])
 def receive_traffic():
     data = request.json
 
-    hostname = data.get("hostname")
-    ip_address = data.get("ip_address")
-    mac_address = data.get("mac_address")
-    username = data.get("username")
-    destination_domain = data.get("destination_domain")
-    protocol = data.get("protocol")
-    bytes_transferred = data.get("bytes_transferred")
-
-    client = Client.query.filter_by(ip_address=ip_address).first()
+    client = Client.query.filter_by(ip_address=data.get("ip_address")).first()
 
     if not client:
         client = Client(
-            hostname=hostname,
-            ip_address=ip_address,
-            mac_address=mac_address,
-            username=username
+            hostname=data.get("hostname"),
+            ip_address=data.get("ip_address"),
+            mac_address=data.get("mac_address"),
+            username=data.get("username")
         )
         db.session.add(client)
         db.session.commit()
 
     log = TrafficLog(
         client_id=client.id,
-        destination_domain=destination_domain,
-        protocol=protocol,
-        bytes_transferred=bytes_transferred
+        destination_domain=data.get("destination_domain"),
+        protocol=data.get("protocol"),
+        bytes_transferred=data.get("bytes_transferred")
     )
 
     db.session.add(log)
 
-    # Restricted Domain Alert
-    restricted = check_restricted_domain(destination_domain)
+    restricted = check_restricted_domain(data.get("destination_domain"))
 
     if restricted:
         keyword, severity = restricted
-        five_minutes_ago = datetime.utcnow() - timedelta(minutes=5)
-
-        existing_alert = Alert.query.filter(
-            Alert.client_id == client.id,
-            Alert.reason.contains(keyword),
-            Alert.timestamp >= five_minutes_ago
-        ).first()
-
-        if not existing_alert:
-            alert = Alert(
-                client_id=client.id,
-                reason=f"Restricted domain accessed: {destination_domain} ({keyword})",
-                severity=severity
-            )
-            db.session.add(alert)
-
-    # Bandwidth Alert
-    if bytes_transferred and bytes_transferred > 10000000:
         alert = Alert(
             client_id=client.id,
-            reason="High bandwidth usage detected",
-            severity="Medium"
+            reason=f"Restricted domain accessed: {data.get('destination_domain')} ({keyword})",
+            severity=severity
         )
         db.session.add(alert)
 
     db.session.commit()
 
-    return {"message": "Traffic data saved successfully"}
+    return {"message": "Traffic data saved"}
 
+# ✅ SYSTEM ALERT (USB + GAME)
 @app.route('/api/system_alert', methods=['POST'])
 def system_alert():
     data = request.json
 
-    ip_address = data.get("ip_address")
-    alert_type = data.get("type")   # "game" or "usb"
-    details = data.get("details")   # game name or usb info
-
-    client = Client.query.filter_by(ip_address=ip_address).first()
+    client = Client.query.filter_by(ip_address=data.get("ip_address")).first()
 
     if not client:
         return {"error": "Client not found"}, 404
 
-    reason = ""
-    
-    if alert_type == "game":
-        reason = f"Game detected: {details}"
-        severity = "High"
-
-    elif alert_type == "usb":
-        reason = f"USB device inserted: {details}"
-        severity = "High"
-
+    if data.get("type") == "game":
+        reason = f"Game detected: {data.get('details')}"
+    elif data.get("type") == "usb":
+        reason = f"USB device inserted: {data.get('details')}"
     else:
-        return {"error": "Invalid alert type"}, 400
+        return {"error": "Invalid type"}, 400
 
-    # Prevent spam (same alert within 2 mins)
-    two_minutes_ago = datetime.utcnow() - timedelta(minutes=2)
+    alert = Alert(
+        client_id=client.id,
+        reason=reason,
+        severity="High"
+    )
 
-    existing_alert = Alert.query.filter(
-        Alert.client_id == client.id,
-        Alert.reason.contains(details),
-        Alert.timestamp >= two_minutes_ago
-    ).first()
+    db.session.add(alert)
+    db.session.commit()
 
-    if not existing_alert:
-        alert = Alert(
-            client_id=client.id,
-            reason=reason,
-            severity=severity
-        )
-        db.session.add(alert)
-        db.session.commit()
-
-    return {"message": "System alert recorded"}
-
-# VIEW LOGS
-@app.route('/view/logs')
-@login_required
-def view_logs():
-    logs = TrafficLog.query.order_by(TrafficLog.timestamp.desc()).all()
-
-    return jsonify({
-        "logs": [
-            {
-                "client": log.client.hostname,
-                "ip": log.client.ip_address,
-                "domain": log.destination_domain,
-                "protocol": log.protocol,
-                "bytes": log.bytes_transferred,
-                "timestamp": str(log.timestamp)
-            } for log in logs
-        ]
-    })
-
-# VIEW ALERTS
-@app.route('/view/alerts')
-@login_required
-def view_alerts():
-    alerts = Alert.query.order_by(Alert.timestamp.desc()).all()
-
-    return jsonify({
-        "alerts": [
-            {
-                "client": alert.client.hostname,
-                "ip": alert.client.ip_address,
-                "reason": alert.reason,
-                "severity": alert.severity,
-                "timestamp": str(alert.timestamp)
-            } for alert in alerts
-        ]
-    })
+    return {"message": "Alert stored"}
 
 # RUN SERVER
 if __name__ == "__main__":
