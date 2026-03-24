@@ -34,7 +34,9 @@
             background: var(--bg-color);
             color: var(--text-color);
             transition: background 0.3s, color 0.3s;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .card-custom {
@@ -229,6 +231,25 @@
             font-weight: 600;
         }
 
+        .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--card-border);
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--card-border);
+        }
+
+        .history-table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
         .small,
         .reason-text {
             color: var(--text-color) !important;
@@ -326,13 +347,17 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Recent
                             Alerts</h5>
-                        <div class="filter-container mb-0">
-                            <select id="severityFilter" class="filter-select">
-                                <option value="all">All Severities</option>
-                                <option value="High">High</option>
-                                <option value="Medium">Medium</option>
-                                <option value="Low">Low</option>
-                            </select>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-info btn-sm shadow-sm" onclick="showHistory()"><i
+                                    class="bi bi-clock-history me-1"></i>View History</button>
+                            <div class="filter-container mb-0">
+                                <select id="severityFilter" class="filter-select">
+                                    <option value="all">All Severities</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -503,3 +528,138 @@
         setInterval(loadData, 5000);
         loadData();
     </script>
+
+    <!-- History Modal -->
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="historyModalLabel"><i class="bi bi-clock-history me-2"></i>Alert History
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="filter-container mb-3 p-2 rounded" style="background: rgba(0,0,0,0.05);">
+                        <div class="row g-2 w-100">
+                            <div class="col-md-4">
+                                <input type="text" id="historySearchPC" class="form-control form-control-sm"
+                                    placeholder="Search PC No. (e.g. PC-1)">
+                            </div>
+                            <div class="col-md-4">
+                                <select id="historySeverityFilter" class="form-select form-select-sm">
+                                    <option value="all">All Severities</option>
+                                    <option value="High">High Only</option>
+                                    <option value="Medium">Medium Only</option>
+                                    <option value="Low">Low Only</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="date" id="historyDateFilter" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="history-table-container">
+                        <table class="table table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Client</th>
+                                    <th>Reason</th>
+                                    <th class="text-center">Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let historyModal;
+        let alertHistoryData = [];
+
+        function renderHistoryTable(data) {
+            const tableBody = document.getElementById('historyTableBody');
+            tableBody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center">No matching alert history found.</td></tr>';
+                return;
+            }
+
+            let rows = '';
+            data.forEach(a => {
+                rows += `
+                    <tr>
+                        <td class="small text-nowrap">${a.time}</td>
+                        <td>
+                            <div class="client-name">${a.client}</div>
+                            <div class="text-muted small">${a.ip}</div>
+                        </td>
+                        <td class="reason-text small">${a.reason}</td>
+                        <td class="text-center"><span class="severity-${a.severity.toLowerCase()}">${a.severity}</span></td>
+                    </tr>
+                `;
+            });
+            tableBody.innerHTML = rows;
+        }
+
+        function applyHistoryFilters() {
+            const searchPC = document.getElementById('historySearchPC').value.toLowerCase();
+            const selectedSeverity = document.getElementById('historySeverityFilter').value;
+            const selectedDate = document.getElementById('historyDateFilter').value;
+
+            const filteredData = alertHistoryData.filter(a => {
+                const matchesPC = a.client.toLowerCase().includes(searchPC);
+                const matchesSeverity = selectedSeverity === 'all' || a.severity === selectedSeverity;
+
+                let matchesDate = true;
+                if (selectedDate) {
+                    const alertDate = a.time.split(' ')[0]; // Extract YYYY-MM-DD
+                    matchesDate = alertDate === selectedDate;
+                }
+
+                return matchesPC && matchesSeverity && matchesDate;
+            });
+
+            renderHistoryTable(filteredData);
+        }
+
+        // Add history filter listeners
+        document.getElementById('historySearchPC').addEventListener('input', applyHistoryFilters);
+        document.getElementById('historySeverityFilter').addEventListener('change', applyHistoryFilters);
+        document.getElementById('historyDateFilter').addEventListener('change', applyHistoryFilters);
+
+        async function showHistory() {
+            if (!historyModal) {
+                historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
+            }
+            const tableBody = document.getElementById('historyTableBody');
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center">Loading history...</td></tr>';
+            historyModal.show();
+
+            // Reset filters on open
+            document.getElementById('historySearchPC').value = '';
+            document.getElementById('historySeverityFilter').value = 'all';
+            document.getElementById('historyDateFilter').value = '';
+
+            try {
+                const response = await fetch('/api/alerts/history');
+                if (!response.ok) throw new Error('Network response was not ok');
+
+                alertHistoryData = await response.json();
+                renderHistoryTable(alertHistoryData);
+            } catch (error) {
+                console.error('Error loading alert history:', error);
+                tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Error loading history: ${error.message}</td></tr>`;
+            }
+        }
+    </script>
+</body>

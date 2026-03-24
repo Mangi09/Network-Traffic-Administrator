@@ -85,12 +85,14 @@ def graphs_page():
 @app.route("/api/summary")
 @login_required
 def summary():
-    high = Alert.query.filter_by(severity="High").count()
-    medium = Alert.query.filter_by(severity="Medium").count()
-    low = Alert.query.filter_by(severity="Low").count()
+    # Calculate Daily Alerts (last 24 hours)
+    yesterday = datetime.utcnow() - timedelta(days=1)
+    
+    high = Alert.query.filter(Alert.severity=="High", Alert.timestamp >= yesterday).count()
+    medium = Alert.query.filter(Alert.severity=="Medium", Alert.timestamp >= yesterday).count()
+    low = Alert.query.filter(Alert.severity=="Low", Alert.timestamp >= yesterday).count()
 
     # Calculate Daily Usage (last 24 hours)
-    yesterday = datetime.utcnow() - timedelta(days=1)
     daily_usage = db.session.query(
         db.func.sum(TrafficLog.bytes_transferred)
     ).filter(TrafficLog.timestamp >= yesterday).scalar() or 0
@@ -123,6 +125,24 @@ def summary():
             } for l in recent_logs
         ]
     })
+
+@app.route("/api/alerts/history")
+@login_required
+def alert_history():
+    # Fetch all alerts, joining with Client to avoid N+1 queries
+    alerts = Alert.query.join(Client).order_by(Alert.timestamp.desc()).all()
+    
+    history_data = []
+    for a in alerts:
+        history_data.append({
+            "client": a.client.hostname if a.client else "Unknown",
+            "ip": a.client.ip_address if a.client else "N/A",
+            "reason": a.reason,
+            "severity": a.severity,
+            "time": a.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+        })
+    
+    return jsonify(history_data)
 
 @app.route("/api/graph-data")
 @login_required
