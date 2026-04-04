@@ -84,30 +84,26 @@
 </head>
 
 <body>
-
-    <div class="container-fluid px-4 pt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Network
-                    Analytics</h3>
-                <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="/dashboard"
-                                class="text-decoration-none text-muted small">Dashboard</a></li>
-                        <li class="breadcrumb-item active small text-muted" aria-current="page">Visual Insights</li>
-                    </ol>
-                </nav>
-            </div>
-            <div>
-                <button id="themeToggle" class="btn btn-outline-secondary btn-sm shadow-sm me-2">
-                    <i class="bi bi-moon-stars me-1"></i>Theme
-                </button>
-                <a href="/dashboard" class="btn btn-outline-primary btn-sm shadow-sm me-2"><i
-                        class="bi bi-speedometer2 me-1"></i>Back to Dashboard</a>
-                <a href="/logout" class="btn btn-outline-danger btn-sm shadow-sm"><i
-                        class="bi bi-box-arrow-right me-1"></i>Logout</a>
-            </div>
+    <div class="navbar-custom"
+        style="padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="fw-bold mb-0">QuadNexus</h3>
+        <div class="d-flex gap-2 align-items-center">
+            <button id="themeToggle" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="bi bi-moon-stars me-1"></i>Theme
+            </button>
+            <a href="/dashboard" class="btn btn-outline-primary btn-sm shadow-sm">
+                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+            </a>
+            <a href="/network_activity" class="btn btn-outline-primary btn-sm shadow-sm">
+                <i class="bi bi-activity me-1"></i>Network Activity
+            </a>
+            <a href="/logout" class="btn btn-outline-danger btn-sm shadow-sm">
+                <i class="bi bi-box-arrow-right me-1"></i>Logout
+            </a>
         </div>
+    </div>
+
+    <div class="container-fluid px-4 pt-2">
 
         <div class="row">
             <!-- Traffic Timeline -->

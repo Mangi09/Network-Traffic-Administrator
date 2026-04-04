@@ -285,32 +285,29 @@
 </head>
 
 <body>
-
-    <div class="container-fluid px-4 pt-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h3 class="fw-bold mb-0 text-dark"><i class="bi bi-shield-lock-fill me-2 text-primary"></i>Security
-                    Monitoring</h3>
-                <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="#"
-                                class="text-decoration-none text-muted small">Dashboard</a></li>
-                        <li class="breadcrumb-item active small text-muted" aria-current="page">Real-time Analysis</li>
-                    </ol>
-                </nav>
-            </div>
-            <div>
-                <button id="themeToggle" class="btn btn-outline-secondary btn-sm shadow-sm me-2">
-                    <i class="bi bi-moon-stars me-1"></i>Theme
-                </button>
-                <a href="/graphs" class="btn btn-outline-primary btn-sm shadow-sm me-2"><i
-                        class="bi bi-graph-up-arrow me-1"></i>Analytics</a>
-                <a href="/logout" class="btn btn-outline-danger btn-sm shadow-sm"><i
-                        class="bi bi-box-arrow-right me-1"></i>Logout</a>
-            </div>
+    <div class="navbar-custom"
+        style="padding: 15px 25px; display: flex; justify-content: space-between; align-items: center;">
+        <h3 class="fw-bold mb-0">QuadNexus</h3>
+        <div class="d-flex gap-2 align-items-center">
+            <button id="themeToggle" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="bi bi-moon-stars me-1"></i>Theme
+            </button>
+            <a href="/network_activity" class="btn btn-outline-primary btn-sm shadow-sm">
+                <i class="bi bi-activity me-1"></i>Network Activity
+            </a>
+            <a href="/graphs" class="btn btn-outline-primary btn-sm shadow-sm">
+                <i class="bi bi-graph-up-arrow me-1"></i>Graphs
+            </a>
+            <a href="/logout" class="btn btn-outline-danger btn-sm shadow-sm">
+                <i class="bi bi-box-arrow-right me-1"></i>Logout
+            </a>
         </div>
+    </div>
 
-        <div class="row mb-4">
+    <div class="container-fluid px-4 pt-2">
+        <!-- Main Breadcrumb removed as per drawing -->
+
+        <div class="row mb-4 mt-3">
             <div class="col-md-3">
                 <div class="card-custom text-center border-0" style="border-left: 5px solid #d9534f !important;">
                     <div class="card-title text-danger">Critical Alerts</div>
@@ -342,31 +339,45 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card-custom">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Recent
-                            Alerts</h5>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-info btn-sm shadow-sm" onclick="showHistory()"><i
-                                    class="bi bi-clock-history me-1"></i>View History</button>
-                            <div class="filter-container mb-0">
-                                <select id="severityFilter" class="filter-select">
-                                    <option value="all">All Severities</option>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold mb-0">Recent Alerts</h4>
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="small fw-bold text-muted">Search PC:</label>
+                                <input type="text" id="mainSearchPC" class="form-control form-control-sm"
+                                    placeholder="e.g. PC-1" style="width: 150px;">
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="small fw-bold text-muted">Severity:</label>
+                                <select id="severityFilter" class="form-select form-select-sm" style="width: 130px;">
+                                    <option value="all">All</option>
                                     <option value="High">High</option>
                                     <option value="Medium">Medium</option>
                                     <option value="Low">Low</option>
                                 </select>
                             </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="small fw-bold text-muted">Date:</label>
+                                <input type="date" id="mainDateFilter" class="form-control form-control-sm"
+                                    style="width: 150px;">
+                            </div>
+                            <button class="btn btn-info btn-sm text-white ms-2" onclick="showHistory()">
+                                <i class="bi bi-clock-history me-1"></i>Full History
+                            </button>
                         </div>
                     </div>
+
                     <div class="table-responsive">
                         <table class="table table-hover align-middle">
                             <thead>
-                                <tr>
+                                <tr class="text-uppercase small fw-bold" style="color: var(--muted-text);">
+                                    <th>Timestamp</th>
                                     <th>Source Client</th>
-                                    <th>Reason</th>
-                                    <th class="text-center">Level</th>
+                                    <th>IP Address</th>
+                                    <th>Description</th>
+                                    <th class="text-center">Severity</th>
                                 </tr>
                             </thead>
                             <tbody id="alertsTable"></tbody>
@@ -374,39 +385,8 @@
                     </div>
                 </div>
             </div>
-
-            <div class="col-md-6">
-                <div class="card-custom">
-                    <h5 class="mb-3 fw-bold"><i class="bi bi-activity text-primary me-2"></i>Network Activity</h5>
-                    <div class="filter-container">
-                        <select id="pcFilter" class="filter-select">
-                            <option value="all">All PCs</option>
-                        </select>
-                        <select id="protocolFilter" class="filter-select">
-                            <option value="all">All Protocols</option>
-                            <option value="HTTPS">HTTPS</option>
-                            <option value="HTTP">HTTP</option>
-                            <option value="DNS">DNS</option>
-                            <option value="OTHER">OTHER</option>
-                        </select>
-                        <input type="date" id="dateFilter" class="filter-select">
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead>
-                                <tr>
-                                    <th>Source Client</th>
-                                    <th>Destination</th>
-                                    <th class="text-center">Type</th>
-                                    <th class="text-end">Payload</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logsTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
+    </div>
 
     </div>
 
@@ -448,84 +428,43 @@
             document.getElementById("low").innerText = data.low;
             document.getElementById("usage").innerText = formatBytes(data.total_usage);
 
-            // Update PC Filter options if they don't exist
-            const pcFilter = document.getElementById("pcFilter");
-            const existingPCs = Array.from(pcFilter.options).map(opt => opt.value);
-            const allPCs = [...new Set(data.recent_logs.map(l => l.client))];
-            allPCs.forEach(pc => {
-                if (!existingPCs.includes(pc)) {
-                    const option = document.createElement("option");
-                    option.value = pc;
-                    option.text = pc;
-                    pcFilter.add(option);
-                }
-            });
-
             const alertsTable = document.getElementById("alertsTable");
             alertsTable.innerHTML = "";
 
+            const searchPC = document.getElementById("mainSearchPC").value.toLowerCase();
             const selectedSeverity = document.getElementById("severityFilter").value;
+            const selectedDate = document.getElementById("mainDateFilter").value;
 
             data.recent_alerts
-                .filter(a => selectedSeverity === "all" || a.severity === selectedSeverity)
+                .filter(a => {
+                    const matchesPC = a.client.toLowerCase().includes(searchPC);
+                    const matchesSeverity = selectedSeverity === "all" || a.severity === selectedSeverity;
+                    let matchesDate = true;
+                    if (selectedDate) {
+                        const alertDate = a.time.split(' ')[0];
+                        matchesDate = alertDate === selectedDate;
+                    }
+                    return matchesPC && matchesSeverity && matchesDate;
+                })
                 .forEach(a => {
                     alertsTable.innerHTML += `
             <tr>
-                <td>
-                    <div class="client-name">${a.client}</div>
-                    <div class="text-muted small"><i class="bi bi-pc-display me-1"></i>${a.ip}</div>
-                </td>
+                <td class="small text-muted">${a.time}</td>
+                <td><div class="client-name">${a.client}</div></td>
+                <td class="text-muted small">${a.ip}</td>
                 <td class="reason-text small">${a.reason}</td>
                 <td class="text-center"><span class="severity-${a.severity.toLowerCase()}">${a.severity}</span></td>
-            </tr>
-        `;
-                });
-
-            const logsTable = document.getElementById("logsTable");
-            logsTable.innerHTML = "";
-
-            const selectedPC = document.getElementById("pcFilter").value;
-            const selectedProtocol = document.getElementById("protocolFilter").value;
-            const selectedDate = document.getElementById("dateFilter").value;
-
-            data.recent_logs
-                .filter(l => {
-                    const matchesPC = selectedPC === "all" || l.client === selectedPC;
-                    const matchesProtocol = selectedProtocol === "all" || l.protocol === selectedProtocol;
-
-                    let matchesDate = true;
-                    if (selectedDate) {
-                        const logDate = new Date(l.time).toISOString().split('T')[0];
-                        matchesDate = logDate === selectedDate;
-                    }
-
-                    return matchesPC && matchesProtocol && matchesDate;
-                })
-                .forEach(l => {
-                    const protocolClass = `protocol-${(l.protocol || 'other').toLowerCase()}`;
-                    const dataUsageClass = l.bytes > 1000000 ? 'data-usage-high' : 'data-usage-normal';
-
-                    logsTable.innerHTML += `
-            <tr>
-                <td>
-                    <div class="client-name">${l.client}</div>
-                    <div class="text-muted small"><i class="bi bi-pc-display me-1"></i>${l.ip}</div>
-                </td>
-                <td class="text-truncate reason-text small" style="max-width: 200px;" title="${l.domain}">${l.domain}</td>
-                <td class="text-center"><span class="protocol-badge ${protocolClass}">${l.protocol}</span></td>
-                <td class="text-end ${dataUsageClass}">${formatBytes(l.bytes)}</td>
             </tr>
         `;
                 });
         }
 
         // Add event listeners for filters
+        document.getElementById("mainSearchPC").addEventListener("input", loadData);
         document.getElementById("severityFilter").addEventListener("change", loadData);
-        document.getElementById("pcFilter").addEventListener("change", loadData);
-        document.getElementById("protocolFilter").addEventListener("change", loadData);
-        document.getElementById("dateFilter").addEventListener("change", loadData);
+        document.getElementById("mainDateFilter").addEventListener("change", loadData);
 
-        setInterval(loadData, 5000);
+        setInterval(loadData, 3000);
         loadData();
     </script>
 
