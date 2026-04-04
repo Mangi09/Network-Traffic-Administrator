@@ -601,4 +601,31 @@
             }
         }
     </script>
+    <script>
+        let lastSeenTime = "";
+
+        function checkAlerts() {
+            fetch("/api/get_alerts")
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) return;
+
+                let latest = data[0];
+
+                // Only show if new alert
+                if (latest.time !== lastSeenTime) {
+
+                    if (latest.reason.includes("USB") || latest.reason.includes("Game")) {
+                        alert("⚠️ " + latest.reason);
+                    }
+
+                    lastSeenTime = latest.time;
+                }
+            })
+            .catch(() => {});
+        }
+
+        // keep checking in background
+        setInterval(checkAlerts, 3000);
+        </script>
 </body>
